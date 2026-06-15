@@ -170,7 +170,7 @@
             overflow: hidden;
         }
 
-        .media-container img, .media-container video {
+        .media-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -267,10 +267,10 @@
             <textarea id="item-description" placeholder="e.g., Found this at the mall! It's super soft and rare."></textarea>
         </div>
         <div class="form-group">
-            <label for="item-file">Upload Photo or Video</label>
-            <input type="file" id="item-file" accept="image/*,video/*">
+            <label for="item-url">Image URL Link</label>
+            <input type="text" id="item-url" placeholder="Paste image link here (ends in .jpg, .png, etc.)">
         </div>
-        <button class="upload-btn" id="submit-btn" onclick="addItem()">Upload to My Vault</button>
+        <button class="upload-btn" id="submit-btn" onclick="addItem()">Add to My Vault</button>
     </section>
 
     <main class="showcase-grid" id="grid-container"></main>
@@ -292,53 +292,36 @@
             document.getElementById('daughter-intro').innerText = targetBio;
         }
 
+        // Fast text-only storage function
         function addItem() {
             const nameInput = document.getElementById('item-name');
             const catSelect = document.getElementById('item-category');
             const descInput = document.getElementById('item-description');
-            const fileInput = document.getElementById('item-file');
-            const btn = document.getElementById('submit-btn');
+            const urlInput = document.getElementById('item-url');
 
-            if (!nameInput.value || !fileInput.files[0]) {
-                alert("Please fill out the item name and pick a picture or video file first!");
+            if (!nameInput.value || !urlInput.value) {
+                alert("Please fill out the item name and paste an image link first!");
                 return;
             }
 
-            btn.innerText = "Uploading...";
-            btn.disabled = true;
-
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const mediaSrcString = e.target.result;
-                const isVideo = file.type.startsWith('video');
-
-                const newItem = {
-                    id: Date.now(),
-                    name: nameInput.value,
-                    category: catSelect.value,
-                    description: descInput.value || '', // Saves your text entry here
-                    mediaType: isVideo ? 'video' : 'image',
-                    mediaSrc: mediaSrcString
-                };
-
-                collectionItems.push(newItem);
-                localStorage.setItem('myCollection', JSON.stringify(collectionItems));
-
-                // Reset inputs cleanly
-                nameInput.value = '';
-                catSelect.value = 'plushies';
-                descInput.value = '';
-                fileInput.value = '';
-                
-                displayItems(currentFilter);
-                
-                btn.innerText = "Upload to My Vault";
-                btn.disabled = false;
+            const newItem = {
+                id: Date.now(),
+                name: nameInput.value,
+                category: catSelect.value,
+                description: descInput.value || '',
+                mediaSrc: urlInput.value
             };
 
-            reader.readAsDataURL(file);
+            collectionItems.push(newItem);
+            localStorage.setItem('myCollection', JSON.stringify(collectionItems));
+
+            // Reset inputs cleanly
+            nameInput.value = '';
+            catSelect.value = 'plushies';
+            descInput.value = '';
+            urlInput.value = '';
+            
+            displayItems(currentFilter);
         }
 
         function deleteItem(id) {
@@ -367,17 +350,14 @@
                 const card = document.createElement('article');
                 card.className = 'collection-card';
 
-                let mediaTag = item.mediaType === 'video'
-                    ? `<video src="${item.mediaSrc}" controls></video>`
-                    : `<img src="${item.mediaSrc}" alt="${item.name}">`;
-
-                // Render description if one exists
                 let descriptionTag = item.description 
                     ? `<p class="card-description">${item.description}</p>` 
                     : '';
 
                 card.innerHTML = `
-                    <div class="media-container">${mediaTag}</div>
+                    <div class="media-container">
+                        <img src="${item.mediaSrc}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=500';">
+                    </div>
                     <div class="card-body">
                         <span class="card-category">${item.category}</span>
                         <h4 class="card-title">${item.name}</h4>
