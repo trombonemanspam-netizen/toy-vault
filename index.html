@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Character Collection</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Modern Bright Aesthetic */
         :root {
@@ -109,13 +108,19 @@
             font-size: 0.9rem;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 0.7rem;
             border: 1px solid #ccc;
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            height: 80px;
         }
 
         .upload-btn {
@@ -199,6 +204,13 @@
             font-weight: 700;
         }
 
+        .card-description {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            margin: 0.5rem 0 1rem 0;
+            line-height: 1.4;
+        }
+
         /* Delete Button Styling */
         .delete-btn {
             background-color: var(--primary);
@@ -209,7 +221,7 @@
             font-size: 0.85rem;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 1rem;
+            margin-top: auto;
             align-self: flex-end;
             transition: background-color 0.2s, transform 0.1s;
         }
@@ -251,16 +263,19 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="item-description">Description / Notes</label>
+            <textarea id="item-description" placeholder="e.g., Found this at the mall! It's super soft and rare."></textarea>
+        </div>
+        <div class="form-group">
             <label for="item-file">Upload Photo or Video</label>
             <input type="file" id="item-file" accept="image/*,video/*">
         </div>
         <button class="upload-btn" id="submit-btn" onclick="addItem()">Upload to My Vault</button>
     </section>
 
-    <main class="showcase-grid" id="grid-container">
-        </main>
+    <main class="showcase-grid" id="grid-container"></main>
 
-       <script>
+    <script>
         let collectionItems = JSON.parse(localStorage.getItem('myCollection')) || [];
         let currentFilter = 'all';
 
@@ -280,6 +295,7 @@
         function addItem() {
             const nameInput = document.getElementById('item-name');
             const catSelect = document.getElementById('item-category');
+            const descInput = document.getElementById('item-description');
             const fileInput = document.getElementById('item-file');
             const btn = document.getElementById('submit-btn');
 
@@ -302,6 +318,7 @@
                     id: Date.now(),
                     name: nameInput.value,
                     category: catSelect.value,
+                    description: descInput.value || '', // Saves your text entry here
                     mediaType: isVideo ? 'video' : 'image',
                     mediaSrc: mediaSrcString
                 };
@@ -309,7 +326,10 @@
                 collectionItems.push(newItem);
                 localStorage.setItem('myCollection', JSON.stringify(collectionItems));
 
+                // Reset inputs cleanly
                 nameInput.value = '';
+                catSelect.value = 'plushies';
+                descInput.value = '';
                 fileInput.value = '';
                 
                 displayItems(currentFilter);
@@ -351,11 +371,17 @@
                     ? `<video src="${item.mediaSrc}" controls></video>`
                     : `<img src="${item.mediaSrc}" alt="${item.name}">`;
 
+                // Render description if one exists
+                let descriptionTag = item.description 
+                    ? `<p class="card-description">${item.description}</p>` 
+                    : '';
+
                 card.innerHTML = `
                     <div class="media-container">${mediaTag}</div>
                     <div class="card-body">
                         <span class="card-category">${item.category}</span>
                         <h4 class="card-title">${item.name}</h4>
+                        ${descriptionTag}
                         <button class="delete-btn" onclick="deleteItem(${item.id})">Delete</button>
                     </div>
                 `;
