@@ -260,25 +260,23 @@
     <main class="showcase-grid" id="grid-container">
         </main>
 
-    <script>
+       <script>
         let collectionItems = JSON.parse(localStorage.getItem('myCollection')) || [];
         let currentFilter = 'all';
+
         window.onload = function() {
             customizeProfile();
             displayItems('all');
         }
+
         function customizeProfile() {
-            const targetName = "Ananya's Collection Vault"; 
+            const targetName = "Riddhima's Awesome Toy Vault"; 
             const targetBio = "Welcome to my digital gallery! This is where I document my collection journey, from finding hidden gems at the store to displaying my favorite Pokémon card pulls and custom plushies.";
             
             document.getElementById('daughter-name').innerText = targetName;
             document.getElementById('daughter-intro').innerText = targetBio;
         }
-            collectionItems = data;
-            displayItems(currentFilter);
-        }
 
-        // Add item into cloud database
         function addItem() {
             const nameInput = document.getElementById('item-name');
             const catSelect = document.getElementById('item-category');
@@ -290,37 +288,31 @@
                 return;
             }
 
-            btn.innerText = "Uploading to Cloud...";
+            btn.innerText = "Uploading...";
             btn.disabled = true;
 
             const file = fileInput.files[0];
             const reader = new FileReader();
 
-            reader.onload = async function(e) {
+            reader.onload = function(e) {
                 const mediaSrcString = e.target.result;
                 const isVideo = file.type.startsWith('video');
 
-                // Send data directly to Supabase cloud table
-                const { error } = await supabase
-                    .from('my_collection')
-                    .insert([
-                        { 
-                            name: nameInput.value, 
-                            category: catSelect.value, 
-                            media_type: isVideo ? 'video' : 'image', 
-                            media_src: mediaSrcString 
-                        }
-                    ]);
+                const newItem = {
+                    id: Date.now(),
+                    name: nameInput.value,
+                    category: catSelect.value,
+                    mediaType: isVideo ? 'video' : 'image',
+                    mediaSrc: mediaSrcString
+                };
 
-                if (error) {
-                    alert("Cloud Save Failed. Check credentials.");
-                    console.error(error);
-                } else {
-                    // Reset inputs
-                    nameInput.value = '';
-                    fileInput.value = '';
-                    await fetchItems(); // Update interface with new live item
-                }
+                collectionItems.push(newItem);
+                localStorage.setItem('myCollection', JSON.stringify(collectionItems));
+
+                nameInput.value = '';
+                fileInput.value = '';
+                
+                displayItems(currentFilter);
                 
                 btn.innerText = "Upload to My Vault";
                 btn.disabled = false;
@@ -329,24 +321,14 @@
             reader.readAsDataURL(file);
         }
 
-        // Delete item out of cloud database
-        async function deleteItem(id) {
-            if (confirm("Are you sure you want to permanently delete this item from the cloud vault?")) {
-                const { error } = await supabase
-                    .from('my_collection')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) {
-                    alert("Could not complete delete request.");
-                    console.error(error);
-                } else {
-                    await fetchItems(); // Re-fetch remaining live items
-                }
+        function deleteItem(id) {
+            if (confirm("Are you sure you want to permanently delete this item?")) {
+                collectionItems = collectionItems.filter(item => item.id !== id);
+                localStorage.setItem('myCollection', JSON.stringify(collectionItems));
+                displayItems(currentFilter);
             }
         }
 
-        // Render functions
         function displayItems(filter) {
             currentFilter = filter;
             const container = document.getElementById('grid-container');
@@ -365,9 +347,9 @@
                 const card = document.createElement('article');
                 card.className = 'collection-card';
 
-                let mediaTag = item.media_type === 'video'
-                    ? `<video src="${item.media_src}" controls></video>`
-                    : `<img src="${item.media_src}" alt="${item.name}">`;
+                let mediaTag = item.mediaType === 'video'
+                    ? `<video src="${item.mediaSrc}" controls></video>`
+                    : `<img src="${item.mediaSrc}" alt="${item.name}">`;
 
                 card.innerHTML = `
                     <div class="media-container">${mediaTag}</div>
