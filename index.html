@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Character Collection</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Modern Bright Aesthetic */
+        :root {
+            --primary: #ff5a5f;
+            --secondary: #ffb400;
+            --accent-blue: #00a699;
+            --bg-light: #f7f9fa;
+            --card-bg: #ffffff;
+            --text-dark: #484848;
+            --text-light: #767676;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Hero / Introduction Section */
+        .intro-section {
+            background: linear-gradient(135deg, #ff5a5f 0%, #ff7e40 100%);
+            color: white;
+            text-align: center;
+            padding: 4rem 2rem;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .intro-section h1 {
+            font-size: 3rem;
+            margin: 0 0 1rem 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .intro-section p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        /* Interactive Filter Navigation Links */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem auto;
+            flex-wrap: wrap;
+            padding: 0 1rem;
+        }
+
+        .nav-btn {
+            background-color: var(--card-bg);
+            border: 2px solid #ebebeb;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Upload Vault Form Layout */
+        .upload-section {
+            background-color: var(--card-bg);
+            max-width: 500px;
+            margin: 0 auto 3rem auto;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #ebebeb;
+        }
+
+        .upload-section h3 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1.4rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .upload-btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .upload-btn:hover {
+            background-color: #00847a;
+        }
+
+        /* Showcase Grid and Cards */
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto 5rem auto;
+        }
+
+        .collection-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #ebebeb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .media-container {
+            width: 100%;
+            height: 250px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .media-container img, .media-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-body {
+            padding: 1.2rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+
+        .card-category {
+            position: absolute;
+            top: -15px;
+            left: 15px;
+            background-color: var(--secondary);
+            color: white;
+            padding: 0.2rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin: 0.5rem 0 0 0;
+            font-weight: 700;
+        }
+
+        /* Delete Button Styling */
+        .delete-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            align-self: flex-end;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .delete-btn:hover {
+            background-color: #d13b40;
+            transform: scale(1.03);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="intro-section">
+        <h1 id="daughter-name">My Awesome Toy Vault</h1>
+        <p id="daughter-intro">Welcome to my personal showcase space! Here is where I track and share all the amazing Pokémon plushies, cool action figures, trading cards, and cute pouches I find and pick up from the store.</p>
+    </header>
+
+    <nav class="nav-container">
+        <button class="nav-btn active" onclick="filterCategory('all')">All Items</button>
+        <button class="nav-btn" onclick="filterCategory('plushies')">Plushies</button>
+        <button class="nav-btn" onclick="filterCategory('figures')">Figures</button>
+        <button class="nav-btn" onclick="filterCategory('cards')">Cards</button>
+        <button class="nav-btn" onclick="filterCategory('pouches')">Pouches</button>
+    </nav>
+
+    <section class="upload-section">
+        <h3>Add to My Collection</h3>
+        <div class="form-group">
+            <label for="item-name">Toy / Character Name</label>
+            <input type="text" id="item-name" placeholder="e.g., Sitting Cuties Pikachu">
+        </div>
+        <div class="form-group">
+            <label for="item-category">Category</label>
+            <select id="item-category">
+                <option value="plushies">Plushies</option>
+                <option value="figures">Figures</option>
+                <option value="cards">Cards</option>
+                <option value="pouches">Pouches</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="item-file">Upload Photo or Video</label>
+            <input type="file" id="item-file" accept="image/*,video/*">
+        </div>
+        <button class="upload-btn" id="submit-btn" onclick="addItem()">Upload to My Vault</button>
+    </section>
+
+    <main class="showcase-grid" id="grid-container">
+        </main>
+
+    <script>
+        // -----------------------------------------------------------------
+        // SUPABASE CONFIGURATION
+        // Replace these placeholder strings with your actual credentials!
+        // -----------------------------------------------------------------
+        const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+        const supabase =  supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let collectionItems = [];
+        let currentFilter = 'all';
+
+        window.onload = function() {
+            customizeProfile();
+            fetchItems(); // Grab existing data from the cloud instantly
+        }
+
+        function customizeProfile() {
+            const targetName = "Ananya's Collection Vault"; 
+            const targetBio = "Welcome to my digital gallery! This is where I document my collection journey, from finding hidden gems at the store to displaying my favorite Pokémon card pulls and custom plushies.";
+            
+            document.getElementById('daughter-name').innerText = targetName;
+            document.getElementById('daughter-intro').innerText = targetBio;
+        }
+
+        // Fetch data from Supabase Cloud Table
+        async function fetchItems() {
+            const { data, error } = await supabase
+                .from('my_collection')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error loading vault items:", error);
+                return;
+            }
+
+            collectionItems = data;
+            displayItems(currentFilter);
+        }
+
+        // Add item into cloud database
+        function addItem() {
+            const nameInput = document.getElementById('item-name');
+            const catSelect = document.getElementById('item-category');
+            const fileInput = document.getElementById('item-file');
+            const btn = document.getElementById('submit-btn');
+
+            if (!nameInput.value || !fileInput.files[0]) {
+                alert("Please fill out the item name and pick a picture or video file first!");
+                return;
+            }
+
+            btn.innerText = "Uploading to Cloud...";
+            btn.disabled = true;
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                const mediaSrcString = e.target.result;
+                const isVideo = file.type.startsWith('video');
+
+                // Send data directly to Supabase cloud table
+                const { error } = await supabase
+                    .from('my_collection')
+                    .insert([
+                        { 
+                            name: nameInput.value, 
+                            category: catSelect.value, 
+                            media_type: isVideo ? 'video' : 'image', 
+                            media_src: mediaSrcString 
+                        }
+                    ]);
+
+                if (error) {
+                    alert("Cloud Save Failed. Check credentials.");
+                    console.error(error);
+                } else {
+                    // Reset inputs
+                    nameInput.value = '';
+                    fileInput.value = '';
+                    await fetchItems(); // Update interface with new live item
+                }
+                
+                btn.innerText = "Upload to My Vault";
+                btn.disabled = false;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Delete item out of cloud database
+        async function deleteItem(id) {
+            if (confirm("Are you sure you want to permanently delete this item from the cloud vault?")) {
+                const { error } = await supabase
+                    .from('my_collection')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) {
+                    alert("Could not complete delete request.");
+                    console.error(error);
+                } else {
+                    await fetchItems(); // Re-fetch remaining live items
+                }
+            }
+        }
+
+        // Render functions
+        function displayItems(filter) {
+            currentFilter = filter;
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+
+            const filteredList = filter === 'all' 
+                ? collectionItems 
+                : collectionItems.filter(item => item.category === filter);
+
+            if (filteredList.length === 0) {
+                container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-light); padding: 2rem;">No items uploaded in this category yet. Use the tool above to add some store finds!</p>`;
+                return;
+            }
+
+            filteredList.forEach(item => {
+                const card = document.createElement('article');
+                card.className = 'collection-card';
+
+                let mediaTag = item.media_type === 'video'
+                    ? `<video src="${item.media_src}" controls></video>`
+                    : `<img src="${item.media_src}" alt="${item.name}">`;
+
+                card.innerHTML = `
+                    <div class="media-container">${mediaTag}</div>
+                    <div class="card-body">
+                        <span class="card-category">${item.category}</span>
+                        <h4 class="card-title">${item.name}</h4>
+                        <button class="delete-btn" onclick="deleteItem(${item.id})">Delete</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterCategory(category) {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText.toLowerCase() === category || (category === 'all' && btn.innerText.includes('All'))) {
+                    btn.classList.add('active');
+                }
+            });
+            displayItems(category);
+        }
+    </script>
+</body>
+</html>
