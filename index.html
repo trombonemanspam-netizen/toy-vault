@@ -264,13 +264,13 @@
         </div>
         <div class="form-group">
             <label for="item-description">Description / Notes</label>
-            <textarea id="item-description" placeholder="e.g., Found this at the mall! It's super soft and rare."></textarea>
+            <textarea id="item-description" placeholder="e.g., Found this at the store! It's super soft."></textarea>
         </div>
         <div class="form-group">
-            <label for="item-url">Image URL Link</label>
-            <input type="text" id="item-url" placeholder="Paste image link here (ends in .jpg, .png, etc.)">
+            <label for="item-file">Take Photo or Choose File</label>
+            <input type="file" id="item-file" accept="image/*">
         </div>
-        <button class="upload-btn" id="submit-btn" onclick="addItem()">Add to My Vault</button>
+        <button class="upload-btn" id="submit-btn" onclick="addItem()">Upload to My Vault</button>
     </section>
 
     <main class="showcase-grid" id="grid-container"></main>
@@ -292,36 +292,84 @@
             document.getElementById('daughter-intro').innerText = targetBio;
         }
 
-        // Fast text-only storage function
         function addItem() {
             const nameInput = document.getElementById('item-name');
             const catSelect = document.getElementById('item-category');
             const descInput = document.getElementById('item-description');
-            const urlInput = document.getElementById('item-url');
+            const fileInput = document.getElementById('item-file');
+            const btn = document.getElementById('submit-btn');
 
-            if (!nameInput.value || !urlInput.value) {
-                alert("Please fill out the item name and paste an image link first!");
+            if (!nameInput.value || !fileInput.files[0]) {
+                alert("Please fill out the item name and take a photo first!");
                 return;
             }
 
-            const newItem = {
-                id: Date.now(),
-                name: nameInput.value,
-                category: catSelect.value,
-                description: descInput.value || '',
-                mediaSrc: urlInput.value
+            btn.innerText = "Compressing & Saving...";
+            btn.disabled = true;
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // MAGIC FIXED STEP: Creates a small hidden canvas to shrink the giant camera photo
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Resize the image to standard web card dimensions (Max 500px)
+                    let width = img.width;
+                    let height = img.height;
+                    const max_size = 500;
+
+                    if (width > height) {
+                        if (width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        }
+                    } else {
+                        if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress into a tiny, ultra-light JPEG
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+                    // Check if browser limit is safe
+                    try {
+                        const newItem = {
+                            id: Date.now(),
+                            name: nameInput.value,
+                            category: catSelect.value,
+                            description: descInput.value || '',
+                            mediaSrc: compressedDataUrl
+                        };
+
+                        collectionItems.push(newItem);
+                        localStorage.setItem('myCollection', JSON.stringify(collectionItems));
+
+                        // Clear form
+                        nameInput.value = '';
+                        descInput.value = '';
+                        fileInput.value = '';
+                        
+                        displayItems(currentFilter);
+                    } catch (e) {
+                        alert("Your vault memory limit is full! Try deleting an old entry first before adding a new picture.");
+                    }
+
+                    btn.innerText = "Upload to My Vault";
+                    btn.disabled = false;
+                };
+                img.src = event.target.result;
             };
-
-            collectionItems.push(newItem);
-            localStorage.setItem('myCollection', JSON.stringify(collectionItems));
-
-            // Reset inputs cleanly
-            nameInput.value = '';
-            catSelect.value = 'plushies';
-            descInput.value = '';
-            urlInput.value = '';
-            
-            displayItems(currentFilter);
+            reader.readAsDataURL(file);
         }
 
         function deleteItem(id) {
@@ -356,7 +404,7 @@
 
                 card.innerHTML = `
                     <div class="media-container">
-                        <img src="${item.mediaSrc}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=500';">
+                        <img src="${item.mediaSrc}" alt="${item.name}">
                     </div>
                     <div class="card-body">
                         <span class="card-category">${item.category}</span>
