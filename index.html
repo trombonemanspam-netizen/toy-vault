@@ -261,23 +261,12 @@
         </main>
 
     <script>
-        // -----------------------------------------------------------------
-        // SUPABASE CONFIGURATION
-        // Replace these placeholder strings with your actual credentials!
-        // -----------------------------------------------------------------
-        const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-
-        const supabase =  supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let collectionItems = [];
+        let collectionItems = JSON.parse(localStorage.getItem('myCollection')) || [];
         let currentFilter = 'all';
-
         window.onload = function() {
             customizeProfile();
-            fetchItems(); // Grab existing data from the cloud instantly
+            displayItems('all');
         }
-
         function customizeProfile() {
             const targetName = "Ananya's Collection Vault"; 
             const targetBio = "Welcome to my digital gallery! This is where I document my collection journey, from finding hidden gems at the store to displaying my favorite Pokémon card pulls and custom plushies.";
@@ -285,19 +274,6 @@
             document.getElementById('daughter-name').innerText = targetName;
             document.getElementById('daughter-intro').innerText = targetBio;
         }
-
-        // Fetch data from Supabase Cloud Table
-        async function fetchItems() {
-            const { data, error } = await supabase
-                .from('my_collection')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error("Error loading vault items:", error);
-                return;
-            }
-
             collectionItems = data;
             displayItems(currentFilter);
         }
